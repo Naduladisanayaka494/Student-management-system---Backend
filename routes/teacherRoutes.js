@@ -26,7 +26,7 @@ router.post('/login', async (req, res) => {
   // Include role in the token payload
   const token = jwt.sign(
     { id: teacher._id, role: teacher.role }, 
-    process.env.JWT_SECRET, 
+    process.env.jwtSecretKey, 
     { expiresIn: '1h' }
   );
 
