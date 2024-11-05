@@ -31,4 +31,38 @@ router.post('/login', async (req, res) => {
   res.json({ token });
 });
 
+
+
+router.get('/my-enrollments', authMiddleware, async (req, res) => {
+  try {
+    const studentId = req.user.id; 
+
+
+    const courses = await Course.find({ students: studentId });
+
+    res.json(courses);
+  } catch (error) {
+    console.error('Error fetching courses for student:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.get('/search-enrollments', authMiddleware, async (req, res) => {
+  try {
+    const studentId = req.user.id; // Get student's ID from token
+    const { title } = req.query; // Get the title from query parameters
+
+    // Find courses where this student is enrolled with title containing the search keyword (case-insensitive)
+    const courses = await Course.find({
+      students: studentId,
+      title: { $regex: title, $options: 'i' }, // Case-insensitive search
+    });
+
+    res.json(courses);
+  } catch (error) {
+    console.error('Error searching courses for student:', error);
+    res.status(500).send('Server error');
+  }
+});
+
 module.exports = router;

@@ -33,4 +33,42 @@ router.post('/login', async (req, res) => {
   res.json({ token });
 });
 
+
+router.get('/search', authMiddleware, async (req, res) => {
+  try {
+    const teacherId = req.user.id; // Get teacher's ID from token
+    const { title } = req.query; // Get the title from query parameters
+
+    // Find courses created by this teacher with title containing the search keyword (case-insensitive)
+    const courses = await Course.find({
+      teacher: teacherId,
+      title: { $regex: title, $options: 'i' }, // Case-insensitive search
+    });
+
+    res.json(courses);
+  } catch (error) {
+    console.error('Error searching courses for teacher:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+
+
+router.get('/my-courses', authMiddleware, async (req, res) => {
+  try {
+    const teacherId = req.user.id; // Get teacher's ID from token
+
+    // Find courses created by this teacher
+    const courses = await Course.find({ teacher: teacherId });
+
+    res.json(courses);
+  } catch (error) {
+    console.error('Error fetching courses for teacher:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+
+
+
 module.exports = router;
