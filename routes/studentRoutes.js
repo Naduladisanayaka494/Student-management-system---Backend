@@ -5,14 +5,35 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const Course = require('../models/Course')
 const mongoose = require("mongoose");
-router.post('/register', async (req, res) => {
-  const { name, email, password } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const student = new Student({ name, email, password: hashedPassword });
-  await student.save();
-  res.status(201).send('Student registered successfully');
-});
+// router.post('/register', async (req, res) => {
+//   const { name, email, password } = req.body;
+//   const hashedPassword = await bcrypt.hash(password, 10);
+//   const student = new Student({ name, email, password: hashedPassword });
+//   await student.save();
+//   res.status(201).send('Student registered successfully');
+// });
 
+
+router.post(
+  "/register",
+  upload.single("profilePicture"),
+  async (req, res) => {
+    const { name, email, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Check if a file was uploaded
+    const profilePicture = req.file ? req.file.path : null;
+
+    const student = new Student({
+      name,
+      email,
+      password: hashedPassword,
+      profilePicture,
+    });
+    await student.save();
+    res.status(201).send("Student registered successfully");
+  }
+);
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
