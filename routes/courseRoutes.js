@@ -4,7 +4,7 @@ const Course = require('../models/Course');
 const authMiddleware = require('../middlewares/authMiddleware');
 
 // Create a new course
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/',async (req, res) => {
   const { title, description, teacherId } = req.body;
 
   const course = new Course({ title, description, teacher: teacherId });
@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
 });
 
 // Enroll a student in a course
-router.post('/:courseId/enroll', authMiddleware, async (req, res) => {
+router.post('/:courseId/enroll', async (req, res) => {
   const courseId = req.params.courseId;
   const studentId = req.user.id;
 

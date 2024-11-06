@@ -33,7 +33,7 @@ router.post('/login', async (req, res) => {
 
 
 
-router.get('/my-enrollments', authMiddleware, async (req, res) => {
+router.get('/my-enrollments',  async (req, res) => {
   try {
     const studentId = req.user.id; 
 
@@ -47,7 +47,7 @@ router.get('/my-enrollments', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/search-enrollments', authMiddleware, async (req, res) => {
+router.get('/search-enrollments',async (req, res) => {
   try {
     const studentId = req.user.id; // Get student's ID from token
     const { title } = req.query; // Get the title from query parameters
