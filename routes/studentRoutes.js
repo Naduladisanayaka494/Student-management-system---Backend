@@ -3,7 +3,8 @@ const router = express.Router();
 const Student = require('../models/Student');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const Course=require('../models/Course')
+const Course = require('../models/Course')
+const mongoose = require("mongoose");
 router.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -29,6 +30,42 @@ router.post('/login', async (req, res) => {
   );
   
   res.json({ token });
+});
+
+router.post("/unenroll", async (req, res) => {
+  try {
+    const { studentId, courseId } = req.body;
+
+    // Check if student and course IDs are valid
+    if (
+      !mongoose.Types.ObjectId.isValid(studentId) ||
+      !mongoose.Types.ObjectId.isValid(courseId)
+    ) {
+      return res.status(400).send("Invalid student or course ID");
+    }
+
+    // Find the course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).send("Course not found");
+    }
+
+    // Check if the student is enrolled in the course
+    if (!course.enrolledStudents.includes(studentId)) {
+      return res.status(400).send("Student is not enrolled in this course");
+    }
+
+    // Remove the student from the enrolledStudents array
+    course.enrolledStudents = course.enrolledStudents.filter(
+      (id) => id.toString() !== studentId
+    );
+    await course.save();
+
+    res.status(200).send("Successfully unenrolled from the course");
+  } catch (error) {
+    console.error("Error unenrolling from course:", error);
+    res.status(500).send("Server error");
+  }
 });
 
 
