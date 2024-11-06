@@ -5,27 +5,45 @@ const Course = require('../models/Course')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
-router.post(
-  "/register",
-  upload.single("profilePicture"),
-  async (req, res) => {
-    const { name, email, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Check if a file was uploaded
-    const profilePicture = req.file ? req.file.path : null;
 
-    const teacher = new Teacher({
-      name,
-      email,
-      password: hashedPassword,
-      profilePicture,
-    });
-    await teacher.save();
-    res.status(201).send("Teacher registered successfully");
-  }
-);
+
+const uploadDir = path.join(__dirname, "../uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // Set the folder where files will be saved
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname); // Define the filename format
+  },
+});
+
+const upload = multer({ storage: storage });
+
+router.post("/register", upload.single("profilePicture"), async (req, res) => {
+  const { name, email, password } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Check if a file was uploaded
+  const profilePicture = req.file ? req.file.path : null;
+
+  const teacher = new Teacher({
+    name,
+    email,
+    password: hashedPassword,
+    profilePicture,
+  });
+  await teacher.save();
+  res.status(201).send("Teacher registered successfully");
+});
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;

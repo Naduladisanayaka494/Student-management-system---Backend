@@ -5,6 +5,9 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const Course = require('../models/Course')
 const mongoose = require("mongoose");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 // router.post('/register', async (req, res) => {
 //   const { name, email, password } = req.body;
 //   const hashedPassword = await bcrypt.hash(password, 10);
@@ -14,26 +17,37 @@ const mongoose = require("mongoose");
 // });
 
 
-router.post(
-  "/register",
-  upload.single("profilePicture"),
-  async (req, res) => {
-    const { name, email, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
+const uploadDir = path.join(__dirname, "../uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
-    // Check if a file was uploaded
-    const profilePicture = req.file ? req.file.path : null;
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir); // Save files in the uploads directory
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname); // Define the filename format
+  },
+});
+const upload = multer({ storage: storage });
 
-    const student = new Student({
-      name,
-      email,
-      password: hashedPassword,
-      profilePicture,
-    });
-    await student.save();
-    res.status(201).send("Student registered successfully");
-  }
-);
+router.post("/register", upload.single("profilePicture"), async (req, res) => {
+  const { name, email, password } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Check if a file was uploaded
+  const profilePicture = req.file ? req.file.path : null;
+
+  const student = new Student({
+    name,
+    email,
+    password: hashedPassword,
+    profilePicture,
+  });
+  await student.save();
+  res.status(201).send("Student registered successfully");
+});
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
