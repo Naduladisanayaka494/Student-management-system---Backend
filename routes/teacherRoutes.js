@@ -9,14 +9,6 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-
-
-
-const uploadDir = path.join(__dirname, "../uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/"); // Set the folder where files will be saved
@@ -25,6 +17,12 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + "-" + file.originalname); // Define the filename format
   },
 });
+
+
+const uploadDir = path.join(__dirname, "../uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 const upload = multer({ storage: storage });
 
@@ -102,7 +100,25 @@ router.get('/my-courses/:teacherId', async (req, res) => {
   }
 });
 
+router.post("/add-homework", async (req, res) => {
+  try {
+    const { title, description, dueDate, courseId, teacherId } = req.body;
 
+    const homework = new Homework({
+      title,
+      description,
+      dueDate,
+      courseId,
+      teacher: teacherId,
+    });
+
+    await homework.save();
+    res.status(201).json({ message: "Homework added successfully" });
+  } catch (error) {
+    console.error("Error adding homework:", error);
+    res.status(500).send("Server error");
+  }
+});
 
 
 module.exports = router;
