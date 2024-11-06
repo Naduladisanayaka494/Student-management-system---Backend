@@ -3,7 +3,7 @@ const router = express.Router();
 const Student = require('../models/Student');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
+const Course=require('../models/Course')
 router.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -33,16 +33,34 @@ router.post('/login', async (req, res) => {
 
 
 
-router.get('/my-enrollments',  async (req, res) => {
+router.get('/students/:studentId/enrollments', async (req, res) => {
   try {
-    const studentId = req.user.id; 
+    const studentId = req.params.studentId;
 
-
-    const courses = await Course.find({ students: studentId });
+    const courses = await Course.find({ enrolledStudents: studentId }); // Use "enrolledStudents" field
 
     res.json(courses);
   } catch (error) {
     console.error('Error fetching courses for student:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+
+
+router.get('/my-courses/:teacherId', async (req, res) => {
+  try {
+    const teacherId = req.params.teacherId; 
+
+    if (!mongoose.Types.ObjectId.isValid(teacherId)) {
+      return res.status(400).send('Invalid teacher ID');
+    }
+
+    const courses = await Course.find({ teacher: teacherId });
+
+    res.json(courses);
+  } catch (error) {
+    console.error('Error fetching courses for teacher:', error);
     res.status(500).send('Server error');
   }
 });

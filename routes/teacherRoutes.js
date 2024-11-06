@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const Teacher = require('../models/Teacher');
+const Course = require('../models/Course')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
-// Register a new teacher (no change here)
 router.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -13,7 +14,7 @@ router.post('/register', async (req, res) => {
   res.status(201).send('Teacher registered successfully');
 });
 
-// Login teacher with role in JWT
+
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const teacher = await Teacher.findOne({ email });
@@ -23,7 +24,7 @@ router.post('/login', async (req, res) => {
   const isMatch = await bcrypt.compare(password, teacher.password);
   if (!isMatch) return res.status(400).send('Invalid email or password');
 
-  // Include role in the token payload
+
   const token = jwt.sign(
     { id: teacher._id, role: teacher.role }, 
     process.env.jwtSecretKey, 
@@ -34,12 +35,12 @@ router.post('/login', async (req, res) => {
 });
 
 
-router.get('/search', authMiddleware, async (req, res) => {
+router.get('/search', async (req, res) => {
   try {
     const teacherId = req.user.id; // Get teacher's ID from token
     const { title } = req.query; // Get the title from query parameters
 
-    // Find courses created by this teacher with title containing the search keyword (case-insensitive)
+
     const courses = await Course.find({
       teacher: teacherId,
       title: { $regex: title, $options: 'i' }, // Case-insensitive search
@@ -54,11 +55,14 @@ router.get('/search', authMiddleware, async (req, res) => {
 
 
 
-router.get('/my-courses', authMiddleware, async (req, res) => {
+router.get('/my-courses/:teacherId', async (req, res) => {
   try {
-    const teacherId = req.user.id; // Get teacher's ID from token
+    const teacherId = req.params.teacherId; 
 
-    // Find courses created by this teacher
+    if (!mongoose.Types.ObjectId.isValid(teacherId)) {
+      return res.status(400).send('Invalid teacher ID');
+    }
+
     const courses = await Course.find({ teacher: teacherId });
 
     res.json(courses);
