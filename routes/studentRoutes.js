@@ -67,6 +67,32 @@ router.post('/login', async (req, res) => {
   res.json({ token });
 });
 
+
+// Route to get homework for a student's enrolled courses
+router.get('/students/:studentId/homework', async (req, res) => {
+  try {
+    const studentId = req.params.studentId;
+
+    // Find courses where the student is enrolled
+    const courses = await Course.find({ enrolledStudents: studentId });
+
+    // Extract homework from each enrolled course
+    const homeworkList = courses
+      .filter(course => course.homeworks && course.homeworks.length > 0) // Filter courses with homework
+      .map(course => ({
+        courseTitle: course.title,
+        courseId: course._id,
+        homeworks: course.homeworks, // Array of homework assignments for each course
+      }));
+
+    res.json(homeworkList);
+  } catch (error) {
+    console.error('Error fetching homework for student:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+
 router.post("/unenroll", async (req, res) => {
   try {
     const { studentId, courseId } = req.body;
