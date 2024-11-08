@@ -8,6 +8,7 @@ const mongoose = require("mongoose");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const Content = require("../models/Content");
 // router.post('/register', async (req, res) => {
 //   const { name, email, password } = req.body;
 //   const hashedPassword = await bcrypt.hash(password, 10);
@@ -163,6 +164,34 @@ router.get('/my-courses/:teacherId', async (req, res) => {
   }
 });
 
+router.get("/courses/:courseId/content/:studentId", async (req, res) => {
+  const courseId = req.params.courseId;
+  const studentId = req.params.studentId; // Assume student ID comes from the token
+
+  try {
+    // Check if student is enrolled in the course
+    const course = await Course.findOne({
+      _id: courseId,
+      enrolledStudents: studentId,
+    });
+    if (!course)
+      return res
+        .status(403)
+        .send("Access denied: You are not enrolled in this course");
+
+    // Find content for the course
+    const contentList = await Content.find({ courseId }).populate(
+      "uploadedBy",
+      "name"
+    );
+
+    res.json(contentList);
+  } catch (error) {
+    console.error("Error fetching content for course:", error);
+    res.status(500).send("Server error");
+  }
+});
+
 router.get('/search-enrollments',async (req, res) => {
   try {
     const studentId = req.user.id; // Get student's ID from token
@@ -180,5 +209,13 @@ router.get('/search-enrollments',async (req, res) => {
     res.status(500).send('Server error');
   }
 });
+
+
+// routes/student.js
+
+
+// Route to get content for a specific course a student is enrolled in
+
+
 
 module.exports = router;

@@ -8,7 +8,8 @@ const mongoose = require('mongoose');
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const Homework =require('../models/Course')
+const Homework = require('../models/Course')
+const Content = require("../models/Content");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -120,6 +121,43 @@ router.post("/add-homework", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
+router.post(
+  "/courses/:courseId/add-content/:teacherId",
+  upload.single("file"),
+  async (req, res) => {
+    const { title, description } = req.body;
+    const courseId = req.params.courseId;
+    const teacherId = req.params.teacherId; // Assume teacher ID comes from the token
+
+    try {
+      // Check if course exists and teacher is assigned to it
+      const course = await Course.findOne({
+        _id: courseId,
+        teacher: teacherId,
+      });
+      if (!course)
+        return res
+          .status(404)
+          .send("Course not found or you are not the assigned teacher");
+
+      // Create new content entry
+      const content = new Content({
+        title,
+        description,
+        filePath: req.file ? req.file.path : null, // Path of the uploaded file
+        courseId,
+        uploadedBy: teacherId,
+      });
+
+      await content.save();
+      res.status(201).json({ message: "Content added successfully", content });
+    } catch (error) {
+      console.error("Error adding content:", error);
+      res.status(500).send("Server error");
+    }
+  }
+);
 
 
 module.exports = router;
